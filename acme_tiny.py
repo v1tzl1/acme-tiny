@@ -12,7 +12,7 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.addHandler(logging.StreamHandler())
 LOGGER.setLevel(logging.INFO)
 
-def get_crt(account_key, csr, acme_dir, log=LOGGER, CA=DEFAULT_CA):
+def get_crt(account_key, account_email, csr, acme_dir, log=LOGGER, CA=DEFAULT_CA):
     # helper function base64 encode for jose spec
     def _b64(b):
         return base64.urlsafe_b64encode(b).decode('utf8').replace("=", "")
@@ -83,6 +83,7 @@ def get_crt(account_key, csr, acme_dir, log=LOGGER, CA=DEFAULT_CA):
     code, result = _send_signed_request(CA + "/acme/new-reg", {
         "resource": "new-reg",
         "agreement": "https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf",
+        "contact": ["mailto:"+account_email,]
     })
     if code == 201:
         log.info("Registered!")
@@ -175,15 +176,16 @@ def main(argv):
             only ~200 lines, so it won't take long.
 
             ===Example Usage===
-            python acme_tiny.py --account-key ./account.key --csr ./domain.csr --acme-dir /usr/share/nginx/html/.well-known/acme-challenge/ > signed.crt
+            python acme_tiny.py --account-key ./account.key --account-email changeme@example.com --csr ./domain.csr --acme-dir /usr/share/nginx/html/.well-known/acme-challenge/ > signed.crt
             ===================
 
             ===Example Crontab Renewal (once per month)===
-            0 0 1 * * python /path/to/acme_tiny.py --account-key /path/to/account.key --csr /path/to/domain.csr --acme-dir /usr/share/nginx/html/.well-known/acme-challenge/ > /path/to/signed.crt 2>> /var/log/acme_tiny.log
+            0 0 1 * * python /path/to/acme_tiny.py --account-key /path/to/account.key --account-email changeme@example.com --csr /path/to/domain.csr --acme-dir /usr/share/nginx/html/.well-known/acme-challenge/ > /path/to/signed.crt 2>> /var/log/acme_tiny.log
             ==============================================
             """)
     )
     parser.add_argument("--account-key", required=True, help="path to your Let's Encrypt account private key")
+    parser.add_argument("--account-email", required=True, help="email address associated with the account")
     parser.add_argument("--csr", required=True, help="path to your certificate signing request")
     parser.add_argument("--acme-dir", required=True, help="path to the .well-known/acme-challenge/ directory")
     parser.add_argument("--quiet", action="store_const", const=logging.ERROR, help="suppress output except for errors")
@@ -191,7 +193,7 @@ def main(argv):
 
     args = parser.parse_args(argv)
     LOGGER.setLevel(args.quiet or LOGGER.level)
-    signed_crt = get_crt(args.account_key, args.csr, args.acme_dir, log=LOGGER, CA=args.ca)
+    signed_crt = get_crt(args.account_key, args.account_email, args.csr, args.acme_dir, log=LOGGER, CA=args.ca)
     sys.stdout.write(signed_crt)
 
 if __name__ == "__main__": # pragma: no cover

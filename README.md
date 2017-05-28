@@ -116,7 +116,7 @@ and read your private account key and CSR.
 
 ```
 #run the script on your server
-python acme_tiny.py --account-key ./account.key --csr ./domain.csr --acme-dir /var/www/challenges/ > ./signed.crt
+python acme_tiny.py --account-key ./account.key --account-email changeme@example.com --csr ./domain.csr --acme-dir /var/www/challenges/ > ./signed.crt
 ```
 
 ### Step 5: Install the certificate
